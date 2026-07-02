@@ -25,7 +25,6 @@
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Inter',sans-serif;background:var(--fondo);color:var(--tinta);min-height:100vh}
 
-  /* ---------- Encabezado ---------- */
   header{
     background:linear-gradient(120deg,var(--azul-profundo) 0%,#0D3A85 55%,var(--azul-true) 100%);
     color:var(--blanco);
@@ -40,9 +39,8 @@
   .fecha-box .lbl{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.75;font-weight:600}
   .fecha-box .val{font-family:'Sora',sans-serif;font-size:19px;font-weight:700;margin-top:3px}
 
-  main{max-width:1180px;margin:0 auto;padding:28px 40px 50px}
+  main{max-width:1220px;margin:0 auto;padding:28px 40px 50px}
 
-  /* ---------- Zona de carga ---------- */
   #dropzone{
     border:2px dashed var(--azul-true);
     border-radius:14px;
@@ -60,10 +58,9 @@
   #fileInput{display:none}
   #errorMsg{display:none;margin-top:14px;background:#FDECEC;border:1px solid #F5C2C2;color:var(--rojo);padding:12px 16px;border-radius:10px;font-size:14px;font-weight:500}
 
-  /* ---------- Reporte ---------- */
   #reporte{display:none}
 
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:14px}
   .kpi{
     background:var(--blanco);border:1px solid var(--linea);border-radius:14px;
     padding:18px 20px;position:relative;overflow:hidden;
@@ -77,23 +74,32 @@
   .kpi.bad .num{color:var(--rojo)}
   .kpi .sub{font-size:12px;color:var(--gris);margin-top:6px}
 
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--blanco);border:1px solid var(--linea);border-radius:999px;
+    padding:6px 14px;font-size:13px;font-weight:600;color:var(--tinta);
+  }
+  .chip .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .chip b{font-family:'Sora',sans-serif;color:var(--azul-profundo)}
+
   .panel{background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:22px 24px;margin-bottom:22px}
   .panel h3{font-family:'Sora',sans-serif;font-size:15px;color:var(--azul-profundo);letter-spacing:.02em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
   .panel h3::before{content:'';width:8px;height:8px;border-radius:2px;background:var(--azul-true);display:inline-block}
 
-  .grid-2{display:grid;grid-template-columns:1.35fr 1fr;gap:22px;align-items:start}
-
+  .tabla-scroll{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:14px}
   thead th{
-    text-align:left;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);
-    font-weight:600;padding:8px 10px;border-bottom:2px solid var(--linea);
+    text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gris);
+    font-weight:600;padding:8px 10px;border-bottom:2px solid var(--linea);white-space:nowrap;
   }
   thead th.num, td.num{text-align:right}
-  tbody td{padding:10px;border-bottom:1px solid #EDF2F9;font-weight:500}
+  tbody td{padding:10px;border-bottom:1px solid #EDF2F9;font-weight:500;white-space:nowrap}
   tbody tr:last-child td{border-bottom:none}
   tbody tr:hover{background:#F7FAFF}
   td.ciudad{font-weight:600;color:var(--azul-profundo)}
-  tfoot td{padding:12px 10px;font-weight:700;color:var(--azul-profundo);border-top:2px solid var(--azul-profundo);font-family:'Sora',sans-serif;font-size:14px}
+  td.cero{color:#B9C4D6}
+  tfoot td{padding:12px 10px;font-weight:700;color:var(--azul-profundo);border-top:2px solid var(--azul-profundo);font-family:'Sora',sans-serif;font-size:14px;white-space:nowrap}
 
   .cumple{display:flex;align-items:center;gap:10px;min-width:150px;justify-content:flex-end}
   .barra{width:80px;height:7px;border-radius:4px;background:#E5ECF6;overflow:hidden;flex-shrink:0}
@@ -101,7 +107,7 @@
   .pct{font-family:'Sora',sans-serif;font-weight:700;width:58px;text-align:right}
   .pct.v{color:var(--verde)} .pct.a{color:var(--ambar)} .pct.r{color:var(--rojo)}
 
-  .chart-wrap{position:relative;height:340px}
+  .chart-wrap{position:relative;height:360px}
 
   .pie-pagina{display:flex;justify-content:space-between;align-items:center;color:var(--gris);font-size:12px;padding-top:4px}
   .pie-pagina b{color:var(--azul-profundo)}
@@ -120,7 +126,6 @@
     main{padding:20px 16px 40px}
     header{padding:20px 16px}
     .kpis{grid-template-columns:repeat(2,1fr)}
-    .grid-2{grid-template-columns:1fr}
   }
   @media print{
     .acciones,#dropzone{display:none!important}
@@ -171,8 +176,8 @@
       </div>
       <div class="kpi bad">
         <div class="lbl">Cancelados</div>
-        <div class="num" id="kpiNoEfectivos">—</div>
-        <div class="sub" id="kpiEstadosDetalle">—</div>
+        <div class="num" id="kpiCancelados">—</div>
+        <div class="sub">Servicios con estado Cancelado</div>
       </div>
       <div class="kpi">
         <div class="lbl">Cumplimiento global</div>
@@ -181,28 +186,22 @@
       </div>
     </div>
 
-    <div class="grid-2">
-      <div class="panel">
-        <h3>Cumplimiento por ciudad</h3>
+    <div class="chips" id="chipsEstados"></div>
+
+    <div class="panel">
+      <h3>Estados por ciudad</h3>
+      <div class="tabla-scroll">
         <table id="tablaCiudades">
-          <thead>
-            <tr>
-              <th>Ciudad</th>
-              <th class="num">Servicios</th>
-              <th class="num">Finalizados</th>
-              <th class="num">Cancelados</th>
-              <th class="num">Cumplimiento</th>
-            </tr>
-          </thead>
+          <thead></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
       </div>
+    </div>
 
-      <div class="panel">
-        <h3>Servicios por ciudad</h3>
-        <div class="chart-wrap"><canvas id="chartCiudades"></canvas></div>
-      </div>
+    <div class="panel">
+      <h3>Distribución de estados por ciudad</h3>
+      <div class="chart-wrap"><canvas id="chartCiudades"></canvas></div>
     </div>
 
     <div class="panel" id="panelNovedades" style="display:none">
@@ -233,6 +232,23 @@ const fileInput = document.getElementById('fileInput');
 const errorMsg = document.getElementById('errorMsg');
 let chartRef = null;
 
+// Colores fijos para estados conocidos + paleta de respaldo para estados nuevos
+const COLOR_ESTADOS = {
+  'FINALIZADO':      '#1459D6',
+  'ACEPTADO':        '#6C9BE8',
+  'ASIGNADO':        '#9DBCF0',
+  'NO ASIGNADO':     '#D97E0F',
+  'LLEGADO':         '#0E9F6E',
+  'EN ALISTAMIENTO': '#8B5CB8',
+  'EN RUTA':         '#17A2B8',
+  'CANCELADO':       '#D64545'
+};
+const PALETA_EXTRA = ['#4A6FA5','#C2803D','#5E8C61','#A85D75','#707C9C','#B8A03C'];
+
+function colorEstado(estado, idx){
+  return COLOR_ESTADOS[estado.toUpperCase()] || PALETA_EXTRA[idx % PALETA_EXTRA.length];
+}
+
 dropzone.addEventListener('click', () => fileInput.click());
 dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('hover'); });
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('hover'));
@@ -254,14 +270,14 @@ function procesarArchivo(file){
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-    delimiter: '', // autodetecta ; o ,
+    delimiter: '',
     complete: res => {
       const filas = res.data;
       if (!filas.length) return mostrarError('El archivo está vacío o no se pudo leer.');
       const cols = Object.keys(filas[0]);
-      const colCiudad = cols.find(c => c.trim().toLowerCase() === 'ciudad');
-      const colEstado = cols.find(c => c.trim().toLowerCase() === 'estado');
-      const colFecha  = cols.find(c => c.trim().toLowerCase() === 'fecha');
+      const colCiudad  = cols.find(c => c.trim().toLowerCase() === 'ciudad');
+      const colEstado  = cols.find(c => c.trim().toLowerCase() === 'estado');
+      const colFecha   = cols.find(c => c.trim().toLowerCase() === 'fecha');
       const colNovedad = cols.find(c => c.trim().toLowerCase() === 'novedad');
       if (!colCiudad || !colEstado){
         return mostrarError('No se encontraron las columnas "Ciudad" y "Estado". Verifique que el CSV sea la exportación de servicios.');
@@ -272,20 +288,26 @@ function procesarArchivo(file){
   });
 }
 
-const esFinalizado = e => (e || '').trim().toLowerCase() === 'finalizado';
+function tituloEstado(e){
+  return e.charAt(0) + e.slice(1).toLowerCase();
+}
 
 function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
-  const ciudades = {};
-  const estadosNoEfectivos = {};
+  const ciudades = {};        // ciudad -> { total, estados: {ESTADO: n} }
+  const estadosGlobal = {};   // ESTADO -> n
   const novedades = {};
   const fechas = new Set();
-  let total = 0, finalizados = 0;
+  let total = 0;
 
   filas.forEach(f => {
     const ciudad = (f[cCiudad] || 'SIN CIUDAD').trim().toUpperCase();
-    const estado = (f[cEstado] || 'Sin estado').trim();
-    if (!ciudad && !estado) return;
+    const estado = ((f[cEstado] || 'SIN ESTADO').trim() || 'SIN ESTADO').toUpperCase();
     total++;
+    if (!ciudades[ciudad]) ciudades[ciudad] = { total: 0, estados: {} };
+    ciudades[ciudad].total++;
+    ciudades[ciudad].estados[estado] = (ciudades[ciudad].estados[estado] || 0) + 1;
+    estadosGlobal[estado] = (estadosGlobal[estado] || 0) + 1;
+
     if (cNovedad){
       const nov = (f[cNovedad] || '').trim().toUpperCase();
       if (nov && nov !== 'ENTREGADO'){
@@ -294,19 +316,20 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
         novedades[nov].ciudades[ciudad] = (novedades[nov].ciudades[ciudad] || 0) + 1;
       }
     }
-    if (!ciudades[ciudad]) ciudades[ciudad] = { total: 0, fin: 0, noEf: 0 };
-    ciudades[ciudad].total++;
-    if (esFinalizado(estado)){
-      finalizados++;
-      ciudades[ciudad].fin++;
-    } else {
-      ciudades[ciudad].noEf++;
-      estadosNoEfectivos[estado] = (estadosNoEfectivos[estado] || 0) + 1;
-    }
     if (cFecha && f[cFecha]) fechas.add(String(f[cFecha]).trim().slice(0, 10));
   });
 
   if (!total) return mostrarError('No se encontraron registros válidos en el archivo.');
+
+  // Orden de estados: Finalizado primero, Cancelado al final, el resto por volumen
+  const listaEstados = Object.entries(estadosGlobal).sort((a, b) => {
+    const peso = e => e === 'FINALIZADO' ? -1 : e === 'CANCELADO' ? 1 : 0;
+    return peso(a[0]) - peso(b[0]) || b[1] - a[1];
+  }).map(([e]) => e);
+
+  const finalizados = estadosGlobal['FINALIZADO'] || 0;
+  const cancelados  = estadosGlobal['CANCELADO'] || 0;
+  const pctGlobal   = (finalizados / total) * 100;
 
   // Fecha de operación
   const fechasOrd = [...fechas].filter(Boolean).sort();
@@ -316,32 +339,48 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
   document.getElementById('fechaOperacion').textContent = textoFecha;
 
   // KPIs
-  const noEfectivos = total - finalizados;
-  const pctGlobal = (finalizados / total) * 100;
   document.getElementById('kpiTotal').textContent = total.toLocaleString('es-CO');
   document.getElementById('kpiCiudades').textContent = Object.keys(ciudades).length + ' ciudades con operación';
   document.getElementById('kpiFinalizados').textContent = finalizados.toLocaleString('es-CO');
-  document.getElementById('kpiNoEfectivos').textContent = noEfectivos.toLocaleString('es-CO');
-  const detalle = Object.entries(estadosNoEfectivos).sort((a,b)=>b[1]-a[1]).map(([e,n])=>`${e}: ${n}`).join(' · ');
-  document.getElementById('kpiEstadosDetalle').textContent = detalle || 'Sin novedades';
+  document.getElementById('kpiCancelados').textContent = cancelados.toLocaleString('es-CO');
   document.getElementById('kpiCumplimiento').textContent = pctGlobal.toFixed(1).replace('.', ',') + '%';
 
-  // Tabla ordenada por volumen
-  const orden = Object.entries(ciudades).sort((a,b) => b[1].total - a[1].total);
+  // Chips: todos los estados con su color
+  const chips = document.getElementById('chipsEstados');
+  chips.innerHTML = '';
+  listaEstados.forEach((e, i) => {
+    chips.insertAdjacentHTML('beforeend', `
+      <span class="chip">
+        <span class="dot" style="background:${colorEstado(e, i)}"></span>
+        ${tituloEstado(e)} <b>${estadosGlobal[e].toLocaleString('es-CO')}</b>
+      </span>`);
+  });
+
+  // Tabla dinámica: una columna por estado
+  const orden = Object.entries(ciudades).sort((a, b) => b[1].total - a[1].total);
+  const thead = document.querySelector('#tablaCiudades thead');
   const tbody = document.querySelector('#tablaCiudades tbody');
   const tfoot = document.querySelector('#tablaCiudades tfoot');
-  tbody.innerHTML = ''; tfoot.innerHTML = '';
 
+  thead.innerHTML = '<tr><th>Ciudad</th><th class="num">Servicios</th>' +
+    listaEstados.map(e => `<th class="num">${tituloEstado(e)}</th>`).join('') +
+    '<th class="num">Cumplimiento</th></tr>';
+
+  tbody.innerHTML = '';
   orden.forEach(([ciudad, d]) => {
-    const pct = (d.fin / d.total) * 100;
+    const fin = d.estados['FINALIZADO'] || 0;
+    const pct = (fin / d.total) * 100;
     const clase = pct >= 98 ? 'v' : pct >= 95 ? 'a' : 'r';
     const color = pct >= 98 ? 'var(--verde)' : pct >= 95 ? 'var(--ambar)' : 'var(--rojo)';
+    const celdas = listaEstados.map(e => {
+      const n = d.estados[e] || 0;
+      return `<td class="num${n ? '' : ' cero'}">${n ? n.toLocaleString('es-CO') : '—'}</td>`;
+    }).join('');
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
         <td class="ciudad">${ciudad}</td>
         <td class="num">${d.total.toLocaleString('es-CO')}</td>
-        <td class="num">${d.fin.toLocaleString('es-CO')}</td>
-        <td class="num">${d.noEf ? d.noEf : '—'}</td>
+        ${celdas}
         <td class="num"><div class="cumple">
           <div class="barra"><i style="width:${pct.toFixed(1)}%;background:${color}"></i></div>
           <span class="pct ${clase}">${pct.toFixed(1).replace('.', ',')}%</span>
@@ -349,12 +388,13 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
       </tr>`);
   });
 
+  const celdasTot = listaEstados.map(e =>
+    `<td class="num">${(estadosGlobal[e] || 0).toLocaleString('es-CO')}</td>`).join('');
   tfoot.innerHTML = `
     <tr>
       <td>TOTAL</td>
       <td class="num">${total.toLocaleString('es-CO')}</td>
-      <td class="num">${finalizados.toLocaleString('es-CO')}</td>
-      <td class="num">${noEfectivos}</td>
+      ${celdasTot}
       <td class="num"><div class="cumple">
         <div class="barra"><i style="width:${pctGlobal.toFixed(1)}%;background:var(--azul-true)"></i></div>
         <span class="pct" style="color:var(--azul-profundo)">${pctGlobal.toFixed(1).replace('.', ',')}%</span>
@@ -376,7 +416,7 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
           <td class="ciudad">${nov}</td>
           <td class="num">${d.count.toLocaleString('es-CO')}</td>
           <td class="num">${pctNov.toFixed(1).replace('.', ',')}%</td>
-          <td style="color:var(--gris);font-size:13px">${detCiudades}</td>
+          <td style="color:var(--gris);font-size:13px;white-space:normal">${detCiudades}</td>
         </tr>`);
     });
     panelNov.style.display = 'block';
@@ -384,8 +424,8 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
     panelNov.style.display = 'none';
   }
 
-  // Gráfica
-  dibujarGrafica(orden);
+  // Gráfica apilada: un dataset por estado
+  dibujarGrafica(orden, listaEstados);
 
   document.getElementById('fechaGeneracion').textContent =
     new Date().toLocaleString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
@@ -400,22 +440,22 @@ function formatearFecha(iso){
   return new Date(y, m - 1, d).toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' });
 }
 
-function dibujarGrafica(orden){
+function dibujarGrafica(orden, listaEstados){
   const top = orden.slice(0, 10);
   const labels = top.map(([c]) => c.length > 16 ? c.slice(0, 15) + '…' : c);
-  const fin = top.map(([, d]) => d.fin);
-  const noEf = top.map(([, d]) => d.noEf);
+
+  const datasets = listaEstados.map((e, i) => ({
+    label: tituloEstado(e),
+    data: top.map(([, d]) => d.estados[e] || 0),
+    backgroundColor: colorEstado(e, i),
+    borderRadius: 3,
+    stack: 's'
+  }));
 
   if (chartRef) chartRef.destroy();
   chartRef = new Chart(document.getElementById('chartCiudades'), {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Finalizados', data: fin, backgroundColor: '#1459D6', borderRadius: 4, stack: 's' },
-        { label: 'Cancelados', data: noEf, backgroundColor: '#D64545', borderRadius: 4, stack: 's' }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       indexAxis: 'y',
       responsive: true,
