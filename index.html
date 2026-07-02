@@ -170,7 +170,7 @@
         <div class="sub">Servicios entregados con éxito</div>
       </div>
       <div class="kpi bad">
-        <div class="lbl">No efectivos</div>
+        <div class="lbl">Cancelados</div>
         <div class="num" id="kpiNoEfectivos">—</div>
         <div class="sub" id="kpiEstadosDetalle">—</div>
       </div>
@@ -190,7 +190,7 @@
               <th>Ciudad</th>
               <th class="num">Servicios</th>
               <th class="num">Finalizados</th>
-              <th class="num">No efect.</th>
+              <th class="num">Cancelados</th>
               <th class="num">Cumplimiento</th>
             </tr>
           </thead>
@@ -365,7 +365,7 @@ function dibujarGrafica(orden){
       labels,
       datasets: [
         { label: 'Finalizados', data: fin, backgroundColor: '#1459D6', borderRadius: 4, stack: 's' },
-        { label: 'No efectivos', data: noEf, backgroundColor: '#D64545', borderRadius: 4, stack: 's' }
+        { label: 'Cancelados', data: noEf, backgroundColor: '#D64545', borderRadius: 4, stack: 's' }
       ]
     },
     options: {
