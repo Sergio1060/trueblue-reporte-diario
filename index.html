@@ -205,6 +205,21 @@
       </div>
     </div>
 
+    <div class="panel" id="panelNovedades" style="display:none">
+      <h3>Novedades del día</h3>
+      <table id="tablaNovedades">
+        <thead>
+          <tr>
+            <th>Novedad</th>
+            <th class="num">Servicios</th>
+            <th class="num">% del total</th>
+            <th>Ciudades</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
     <div class="pie-pagina">
       <span>Fuente: exportación diaria de servicios · SmartQuick</span>
       <span>Generado el <b id="fechaGeneracion"></b> · Quick Help Courier S.A.S.</span>
@@ -247,10 +262,11 @@ function procesarArchivo(file){
       const colCiudad = cols.find(c => c.trim().toLowerCase() === 'ciudad');
       const colEstado = cols.find(c => c.trim().toLowerCase() === 'estado');
       const colFecha  = cols.find(c => c.trim().toLowerCase() === 'fecha');
+      const colNovedad = cols.find(c => c.trim().toLowerCase() === 'novedad');
       if (!colCiudad || !colEstado){
         return mostrarError('No se encontraron las columnas "Ciudad" y "Estado". Verifique que el CSV sea la exportación de servicios.');
       }
-      construirReporte(filas, colCiudad, colEstado, colFecha);
+      construirReporte(filas, colCiudad, colEstado, colFecha, colNovedad);
     },
     error: () => mostrarError('No se pudo procesar el archivo. Verifique que sea un CSV válido.')
   });
@@ -258,9 +274,10 @@ function procesarArchivo(file){
 
 const esFinalizado = e => (e || '').trim().toLowerCase() === 'finalizado';
 
-function construirReporte(filas, cCiudad, cEstado, cFecha){
+function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
   const ciudades = {};
   const estadosNoEfectivos = {};
+  const novedades = {};
   const fechas = new Set();
   let total = 0, finalizados = 0;
 
@@ -269,6 +286,14 @@ function construirReporte(filas, cCiudad, cEstado, cFecha){
     const estado = (f[cEstado] || 'Sin estado').trim();
     if (!ciudad && !estado) return;
     total++;
+    if (cNovedad){
+      const nov = (f[cNovedad] || '').trim().toUpperCase();
+      if (nov && nov !== 'ENTREGADO'){
+        if (!novedades[nov]) novedades[nov] = { count: 0, ciudades: {} };
+        novedades[nov].count++;
+        novedades[nov].ciudades[ciudad] = (novedades[nov].ciudades[ciudad] || 0) + 1;
+      }
+    }
     if (!ciudades[ciudad]) ciudades[ciudad] = { total: 0, fin: 0, noEf: 0 };
     ciudades[ciudad].total++;
     if (esFinalizado(estado)){
@@ -335,6 +360,29 @@ function construirReporte(filas, cCiudad, cEstado, cFecha){
         <span class="pct" style="color:var(--azul-profundo)">${pctGlobal.toFixed(1).replace('.', ',')}%</span>
       </div></td>
     </tr>`;
+
+  // Novedades
+  const listaNov = Object.entries(novedades).sort((a,b) => b[1].count - a[1].count);
+  const panelNov = document.getElementById('panelNovedades');
+  if (listaNov.length){
+    const tbodyNov = document.querySelector('#tablaNovedades tbody');
+    tbodyNov.innerHTML = '';
+    listaNov.forEach(([nov, d]) => {
+      const pctNov = (d.count / total) * 100;
+      const detCiudades = Object.entries(d.ciudades).sort((a,b) => b[1]-a[1])
+        .map(([c, n]) => `${c} (${n})`).join(' · ');
+      tbodyNov.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td class="ciudad">${nov}</td>
+          <td class="num">${d.count.toLocaleString('es-CO')}</td>
+          <td class="num">${pctNov.toFixed(1).replace('.', ',')}%</td>
+          <td style="color:var(--gris);font-size:13px">${detCiudades}</td>
+        </tr>`);
+    });
+    panelNov.style.display = 'block';
+  } else {
+    panelNov.style.display = 'none';
+  }
 
   // Gráfica
   dibujarGrafica(orden);
