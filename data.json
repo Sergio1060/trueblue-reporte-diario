@@ -1,0 +1,69 @@
+{
+  "actualizado": "2026-07-03T13:05:53-05:00",
+  "fuente": "seed-csv",
+  "fechas": [
+    "2026-07-02"
+  ],
+  "total": 394,
+  "estados": {
+    "FINALIZADO": 305,
+    "ACEPTADO": 64,
+    "CANCELADO": 7,
+    "NO ASIGNADO": 7,
+    "LLEGADO": 4,
+    "EN ALISTAMIENTO": 4,
+    "ASIGNADO": 3
+  },
+  "cedis": {
+    "BOGOTA": {
+      "total": 247,
+      "estados": {
+        "FINALIZADO": 212,
+        "ACEPTADO": 17,
+        "CANCELADO": 6,
+        "NO ASIGNADO": 6,
+        "EN ALISTAMIENTO": 4,
+        "LLEGADO": 2
+      }
+    },
+    "CALI": {
+      "total": 25,
+      "estados": {
+        "FINALIZADO": 24,
+        "ACEPTADO": 1
+      }
+    },
+    "MEDELLIN": {
+      "total": 122,
+      "estados": {
+        "FINALIZADO": 69,
+        "ACEPTADO": 46,
+        "ASIGNADO": 3,
+        "LLEGADO": 2,
+        "CANCELADO": 1,
+        "NO ASIGNADO": 1
+      }
+    }
+  },
+  "novedades": {
+    "CLIENTE NO CONTESTA": {
+      "count": 1,
+      "cedis": {
+        "BOGOTA": 1
+      }
+    },
+    "DIRECCIÓN ERRADA": {
+      "count": 3,
+      "cedis": {
+        "BOGOTA": 2,
+        "MEDELLIN": 1
+      }
+    },
+    "NADIE PARA RECIBIR": {
+      "count": 3,
+      "cedis": {
+        "BOGOTA": 3
+      }
+    }
+  }
+}
