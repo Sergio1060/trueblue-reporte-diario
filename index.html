@@ -189,7 +189,7 @@
     <div class="chips" id="chipsEstados"></div>
 
     <div class="panel">
-      <h3>Estados por ciudad</h3>
+      <h3>Estados por CEDI</h3>
       <div class="tabla-scroll">
         <table id="tablaCiudades">
           <thead></thead>
@@ -200,7 +200,7 @@
     </div>
 
     <div class="panel">
-      <h3>Distribución de estados por ciudad</h3>
+      <h3>Distribución de estados por CEDI</h3>
       <div class="chart-wrap"><canvas id="chartCiudades"></canvas></div>
     </div>
 
@@ -212,7 +212,7 @@
             <th>Novedad</th>
             <th class="num">Servicios</th>
             <th class="num">% del total</th>
-            <th>Ciudades</th>
+            <th>CEDIs</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -275,14 +275,16 @@ function procesarArchivo(file){
       const filas = res.data;
       if (!filas.length) return mostrarError('El archivo está vacío o no se pudo leer.');
       const cols = Object.keys(filas[0]);
+      const colCedi    = cols.find(c => c.trim().toLowerCase() === 'cedi');
       const colCiudad  = cols.find(c => c.trim().toLowerCase() === 'ciudad');
       const colEstado  = cols.find(c => c.trim().toLowerCase() === 'estado');
       const colFecha   = cols.find(c => c.trim().toLowerCase() === 'fecha');
       const colNovedad = cols.find(c => c.trim().toLowerCase() === 'novedad');
-      if (!colCiudad || !colEstado){
-        return mostrarError('No se encontraron las columnas "Ciudad" y "Estado". Verifique que el CSV sea la exportación de servicios.');
+      const colGrupo   = colCedi || colCiudad; // CEDI como agrupador; Ciudad como respaldo
+      if (!colGrupo || !colEstado){
+        return mostrarError('No se encontraron las columnas "CEDI" (o "Ciudad") y "Estado". Verifique que el CSV sea la exportación de servicios.');
       }
-      construirReporte(filas, colCiudad, colEstado, colFecha, colNovedad);
+      construirReporte(filas, colGrupo, colEstado, colFecha, colNovedad);
     },
     error: () => mostrarError('No se pudo procesar el archivo. Verifique que sea un CSV válido.')
   });
@@ -290,6 +292,12 @@ function procesarArchivo(file){
 
 function tituloEstado(e){
   return e.charAt(0) + e.slice(1).toLowerCase();
+}
+
+// "PROYECTO SAI S.A.S - BOGOTA" -> "BOGOTA" (toma lo que sigue al último " - ")
+function nombreCedi(v){
+  const partes = v.split(' - ');
+  return (partes.length > 1 ? partes[partes.length - 1] : v).trim();
 }
 
 function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
@@ -300,7 +308,7 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
   let total = 0;
 
   filas.forEach(f => {
-    const ciudad = (f[cCiudad] || 'SIN CIUDAD').trim().toUpperCase();
+    const ciudad = nombreCedi((f[cCiudad] || 'SIN CEDI').trim().toUpperCase());
     const estado = ((f[cEstado] || 'SIN ESTADO').trim() || 'SIN ESTADO').toUpperCase();
     total++;
     if (!ciudades[ciudad]) ciudades[ciudad] = { total: 0, estados: {} };
@@ -340,7 +348,7 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
 
   // KPIs
   document.getElementById('kpiTotal').textContent = total.toLocaleString('es-CO');
-  document.getElementById('kpiCiudades').textContent = Object.keys(ciudades).length + ' ciudades con operación';
+  document.getElementById('kpiCiudades').textContent = Object.keys(ciudades).length + ' CEDIs con operación';
   document.getElementById('kpiFinalizados').textContent = finalizados.toLocaleString('es-CO');
   document.getElementById('kpiCancelados').textContent = cancelados.toLocaleString('es-CO');
   document.getElementById('kpiCumplimiento').textContent = pctGlobal.toFixed(1).replace('.', ',') + '%';
@@ -362,7 +370,7 @@ function construirReporte(filas, cCiudad, cEstado, cFecha, cNovedad){
   const tbody = document.querySelector('#tablaCiudades tbody');
   const tfoot = document.querySelector('#tablaCiudades tfoot');
 
-  thead.innerHTML = '<tr><th>Ciudad</th><th class="num">Servicios</th>' +
+  thead.innerHTML = '<tr><th>CEDI</th><th class="num">Servicios</th>' +
     listaEstados.map(e => `<th class="num">${tituloEstado(e)}</th>`).join('') +
     '<th class="num">Cumplimiento</th></tr>';
 
