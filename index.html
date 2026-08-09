@@ -69,7 +69,7 @@
 
   #reporte{display:none}
 
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:14px}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px}
   .kpi{
     background:var(--blanco);border:1px solid var(--linea);border-radius:14px;
     padding:18px 20px;position:relative;overflow:hidden;
@@ -77,8 +77,10 @@
   .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--azul-true)}
   .kpi.ok::before{background:var(--verde)}
   .kpi.bad::before{background:var(--rojo)}
+  .kpi.neutro::before{background:var(--gris)}
+  .kpi.neutro .num{color:var(--gris)}
   .kpi .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);font-weight:600}
-  .kpi .num{font-family:'Sora',sans-serif;font-size:34px;font-weight:800;color:var(--azul-profundo);margin-top:6px;line-height:1}
+  .kpi .num{font-family:'Sora',sans-serif;font-size:30px;font-weight:800;color:var(--azul-profundo);margin-top:6px;line-height:1}
   .kpi.ok .num{color:var(--verde)}
   .kpi.bad .num{color:var(--rojo)}
   .kpi .sub{font-size:12px;color:var(--gris);margin-top:6px}
@@ -117,6 +119,9 @@
   .pct{font-family:'Sora',sans-serif;font-weight:700;width:48px;text-align:right;font-size:13px}
   .pct.v{color:var(--verde)} .pct.a{color:var(--ambar)} .pct.r{color:var(--rojo)}
 
+  .nota{margin-top:12px;font-size:12px;color:var(--gris);line-height:1.5;border-left:3px solid var(--linea);padding-left:10px}
+  .nota strong{color:var(--azul-profundo)}
+
   .chart-wrap{position:relative;height:360px}
 
   .pie-pagina{display:flex;justify-content:space-between;align-items:center;color:var(--gris);font-size:12px;padding-top:4px}
@@ -132,6 +137,9 @@
   .btn.primario{background:var(--azul-true);border-color:var(--azul-true);color:var(--blanco)}
   .btn.primario:hover{background:var(--azul-profundo)}
 
+  @media (max-width:1150px){
+    .kpis{grid-template-columns:repeat(3,1fr)}
+  }
   @media (max-width:900px){
     main{padding:20px 16px 40px}
     header{padding:20px 16px}
@@ -192,15 +200,20 @@
         <div class="num" id="kpiFinalizados">—</div>
         <div class="sub">Servicios entregados con éxito</div>
       </div>
-      <div class="kpi bad">
+      <div class="kpi neutro">
         <div class="lbl">Cancelados</div>
         <div class="num" id="kpiCancelados">—</div>
-        <div class="sub">Servicios con estado Cancelado</div>
+        <div class="sub">Excluidos de la efectividad</div>
       </div>
       <div class="kpi">
-        <div class="lbl">Cumplimiento global</div>
+        <div class="lbl">En responsabilidad</div>
+        <div class="num" id="kpiBase">—</div>
+        <div class="sub">Total de servicios menos cancelados</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">Efectividad</div>
         <div class="num" id="kpiCumplimiento">—</div>
-        <div class="sub">Finalizados / Total de servicios</div>
+        <div class="sub">Finalizados / servicios en responsabilidad</div>
       </div>
     </div>
 
@@ -217,6 +230,9 @@
       </div>
     </div>
 
+      <p class="nota">Los servicios en estado <strong>Cancelado</strong> se muestran en la tabla, pero se excluyen del denominador de la efectividad por no hacer parte de la responsabilidad de Quick.</p>
+    </div>
+
     <div class="panel">
       <h3>Distribución de estados por CEDI</h3>
       <div class="chart-wrap"><canvas id="chartCiudades"></canvas></div>
@@ -229,7 +245,7 @@
           <tr>
             <th>Novedad</th>
             <th class="num">Servicios</th>
-            <th class="num">% del total</th>
+            <th class="num">% en responsabilidad</th>
             <th>CEDIs</th>
           </tr>
         </thead>
@@ -265,6 +281,10 @@ const COLOR_ESTADOS = {
 const PALETA_EXTRA = ['#4A6FA5','#C2803D','#5E8C61','#A85D75','#707C9C','#B8A03C'];
 const colorEstado = (e, i) => COLOR_ESTADOS[e.toUpperCase()] || PALETA_EXTRA[i % PALETA_EXTRA.length];
 const tituloEstado = e => e.charAt(0) + e.slice(1).toLowerCase();
+/* Cancelado no hace parte de la responsabilidad de Quick: se reporta, no se pondera */
+const esCancelado = e => String(e).toUpperCase().startsWith('CANCEL');
+const contarCancelados = obj => Object.entries(obj || {})
+  .reduce((a, [e, n]) => a + (esCancelado(e) ? n : 0), 0);
 const nombreCedi = v => {
   const p = String(v).split(' - ');
   return (p.length > 1 ? p[p.length - 1] : String(v)).trim();
@@ -390,8 +410,9 @@ function renderReporte(agg){
   }).map(([e]) => e);
 
   const finalizados = estadosGlobal['FINALIZADO'] || 0;
-  const cancelados  = estadosGlobal['CANCELADO'] || 0;
-  const pctGlobal   = total ? (finalizados / total) * 100 : 0;
+  const cancelados  = contarCancelados(estadosGlobal);
+  const baseGlobal  = Math.max(total - cancelados, 0);   // universo en responsabilidad de Quick
+  const pctGlobal   = baseGlobal ? (finalizados / baseGlobal) * 100 : 0;
 
   let textoFecha = new Date().toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' });
   if (fechas.length === 1) textoFecha = formatearFecha(fechas[0]);
@@ -402,6 +423,7 @@ function renderReporte(agg){
   document.getElementById('kpiCiudades').textContent = Object.keys(cedis).length + ' CEDIs con operación';
   document.getElementById('kpiFinalizados').textContent = finalizados.toLocaleString('es-CO');
   document.getElementById('kpiCancelados').textContent = cancelados.toLocaleString('es-CO');
+  document.getElementById('kpiBase').textContent = baseGlobal.toLocaleString('es-CO');
   document.getElementById('kpiCumplimiento').textContent = pctGlobal.toFixed(1).replace('.', ',') + '%';
 
   const chips = document.getElementById('chipsEstados');
@@ -421,12 +443,14 @@ function renderReporte(agg){
 
   thead.innerHTML = '<tr><th>CEDI</th><th class="num">Servicios</th>' +
     listaEstados.map(e => `<th class="num">${tituloEstado(e)}</th>`).join('') +
-    '<th class="num">Cumplimiento</th></tr>';
+    '<th class="num">En responsabilidad</th><th class="num">Efectividad</th></tr>';
 
   tbody.innerHTML = '';
   orden.forEach(([cedi, d]) => {
-    const fin = d.estados['FINALIZADO'] || 0;
-    const pct = d.total ? (fin / d.total) * 100 : 0;
+    const fin  = d.estados['FINALIZADO'] || 0;
+    const can  = contarCancelados(d.estados);
+    const base = Math.max(d.total - can, 0);
+    const pct  = base ? (fin / base) * 100 : 0;
     const clase = pct >= 98 ? 'v' : pct >= 95 ? 'a' : 'r';
     const color = pct >= 98 ? 'var(--verde)' : pct >= 95 ? 'var(--ambar)' : 'var(--rojo)';
     const celdas = listaEstados.map(e => {
@@ -438,6 +462,7 @@ function renderReporte(agg){
         <td class="ciudad">${cedi}</td>
         <td class="num">${d.total.toLocaleString('es-CO')}</td>
         ${celdas}
+        <td class="num">${base.toLocaleString('es-CO')}</td>
         <td class="num"><div class="cumple">
           <div class="barra"><i style="width:${pct.toFixed(1)}%;background:${color}"></i></div>
           <span class="pct ${clase}">${pct.toFixed(1).replace('.', ',')}%</span>
@@ -452,6 +477,7 @@ function renderReporte(agg){
       <td>TOTAL</td>
       <td class="num">${total.toLocaleString('es-CO')}</td>
       ${celdasTot}
+      <td class="num">${baseGlobal.toLocaleString('es-CO')}</td>
       <td class="num"><div class="cumple">
         <div class="barra"><i style="width:${pctGlobal.toFixed(1)}%;background:var(--azul-true)"></i></div>
         <span class="pct" style="color:var(--azul-profundo)">${pctGlobal.toFixed(1).replace('.', ',')}%</span>
@@ -464,7 +490,7 @@ function renderReporte(agg){
     const tbodyNov = document.querySelector('#tablaNovedades tbody');
     tbodyNov.innerHTML = '';
     listaNov.forEach(([nov, d]) => {
-      const pctNov = total ? (d.count / total) * 100 : 0;
+      const pctNov = baseGlobal ? (d.count / baseGlobal) * 100 : 0;
       const dets = Object.entries(d.cedis || d.ciudades || {}).sort((a,b) => b[1]-a[1])
         .map(([c, n]) => `${c} (${n})`).join(' · ');
       tbodyNov.insertAdjacentHTML('beforeend', `
