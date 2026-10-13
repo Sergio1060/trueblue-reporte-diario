@@ -119,6 +119,17 @@
   .pct{font-family:'Sora',sans-serif;font-weight:700;width:48px;text-align:right;font-size:13px}
   .pct.v{color:var(--verde)} .pct.a{color:var(--ambar)} .pct.r{color:var(--rojo)}
 
+  td.recurso b{display:block;color:var(--azul-profundo);font-family:'Sora',sans-serif;font-size:12px}
+  td.recurso span{display:block;color:var(--gris);font-size:12px;font-weight:500;white-space:normal;max-width:220px}
+  td.cedi-rec{color:var(--gris);font-size:12px}
+  .estado-ruta{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em}
+  .estado-ruta.fin{background:#E3F6EE;color:var(--verde)}
+  .estado-ruta.curso{background:var(--azul-claro);color:var(--azul-true)}
+  .estado-ruta.sin{background:#EEF1F5;color:var(--gris)}
+  .filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .filtros button{border:1px solid var(--linea);background:var(--blanco);color:var(--tinta);font:600 12px 'Inter',sans-serif;padding:5px 12px;border-radius:999px;cursor:pointer}
+  .filtros button.activo{background:var(--azul-true);border-color:var(--azul-true);color:var(--blanco)}
+
   .nota{margin-top:12px;font-size:12px;color:var(--gris);line-height:1.5;border-left:3px solid var(--linea);padding-left:10px}
   .nota strong{color:var(--azul-profundo)}
 
@@ -147,7 +158,7 @@
     .header-der{width:100%;justify-content:space-between}
   }
   @media print{
-    .acciones,#dropzone{display:none!important}
+    .acciones,#dropzone,.filtros{display:none!important}
     body{background:var(--blanco)}
     main{padding:10px 0}
   }
@@ -228,9 +239,19 @@
           <tfoot></tfoot>
         </table>
       </div>
+      <p class="nota">Los servicios en estado <strong>Cancelado</strong> se muestran en la tabla, pero se excluyen del denominador de la efectividad por no hacer parte de la responsabilidad de Quick.</p>
     </div>
 
-      <p class="nota">Los servicios en estado <strong>Cancelado</strong> se muestran en la tabla, pero se excluyen del denominador de la efectividad por no hacer parte de la responsabilidad de Quick.</p>
+    <div class="panel" id="panelRecursos" style="display:none">
+      <h3>Estado y cumplimiento por recurso</h3>
+      <div class="filtros" id="filtroRecursos"></div>
+      <div class="tabla-scroll">
+        <table id="tablaRecursos">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="nota"><strong>Cumplimiento</strong> = Finalizados / servicios en responsabilidad del recurso (asignados menos cancelados). <strong>Ruta terminada</strong>: el recurso no tiene servicios pendientes; <strong>En ruta</strong>: aún tiene servicios abiertos.</p>
     </div>
 
     <div class="panel">
@@ -301,6 +322,7 @@ async function cargarDatosVivo(manual){
       estadosGlobal: d.estados || {},
       cedis: d.cedis || {},
       novedades: d.novedades || {},
+      recursos: d.recursos || {},
       fechas: d.fechas || []
     });
     // Badge EN VIVO
@@ -361,11 +383,13 @@ function procesarArchivo(file){
       const colEstado  = cols.find(c => c.trim().toLowerCase() === 'estado');
       const colFecha   = cols.find(c => c.trim().toLowerCase() === 'fecha');
       const colNovedad = cols.find(c => c.trim().toLowerCase() === 'novedad');
+      const colRecurso = cols.find(c => c.trim().toLowerCase() === 'recurso');
+      const colConductor = cols.find(c => c.trim().toLowerCase() === 'conductor');
       const colGrupo   = colCedi || colCiudad;
       if (!colGrupo || !colEstado){
         return mostrarError('No se encontraron las columnas "CEDI" (o "Ciudad") y "Estado". Verifique que el CSV sea la exportación de servicios.');
       }
-      const agg = agregarFilas(filas, colGrupo, colEstado, colFecha, colNovedad);
+      const agg = agregarFilas(filas, colGrupo, colEstado, colFecha, colNovedad, colRecurso, colConductor);
       if (!agg.total) return mostrarError('No se encontraron registros válidos en el archivo.');
       renderReporte(agg);
       document.getElementById('badgeVivo').style.display = 'none';
@@ -375,8 +399,8 @@ function procesarArchivo(file){
   });
 }
 
-function agregarFilas(filas, cGrupo, cEstado, cFecha, cNovedad){
-  const cedis = {}, estadosGlobal = {}, novedades = {};
+function agregarFilas(filas, cGrupo, cEstado, cFecha, cNovedad, cRecurso, cConductor){
+  const cedis = {}, estadosGlobal = {}, novedades = {}, recursos = {};
   const fechas = new Set();
   let total = 0;
   filas.forEach(f => {
@@ -395,9 +419,19 @@ function agregarFilas(filas, cGrupo, cEstado, cFecha, cNovedad){
         novedades[nov].cedis[grupo] = (novedades[nov].cedis[grupo] || 0) + 1;
       }
     }
+    if (cRecurso || cConductor){
+      const placa = (cRecurso ? (f[cRecurso] || '') : '').trim().toUpperCase();
+      const cond  = (cConductor ? (f[cConductor] || '') : '').trim();
+      const clave = placa || cond.toUpperCase() || 'SIN RECURSO';
+      if (!recursos[clave]) recursos[clave] = { conductor: cond, cedi: grupo, total: 0, estados: {} };
+      const r = recursos[clave];
+      if (!r.conductor && cond) r.conductor = cond;
+      r.total++;
+      r.estados[estado] = (r.estados[estado] || 0) + 1;
+    }
     if (cFecha && f[cFecha]) fechas.add(String(f[cFecha]).trim().slice(0, 10));
   });
-  return { total, estadosGlobal, cedis, novedades, fechas: [...fechas].filter(Boolean).sort() };
+  return { total, estadosGlobal, cedis, novedades, recursos, fechas: [...fechas].filter(Boolean).sort() };
 }
 
 /* ================= RENDER (común para EN VIVO y CSV) ================= */
@@ -506,6 +540,8 @@ function renderReporte(agg){
     panelNov.style.display = 'none';
   }
 
+  renderRecursos(agg.recursos || {}, listaEstados);
+
   dibujarGrafica(orden, listaEstados);
 
   document.getElementById('fechaGeneracion').textContent =
@@ -513,6 +549,70 @@ function renderReporte(agg){
 
   dropzone.style.display = 'none';
   document.getElementById('reporte').style.display = 'block';
+}
+
+/* ================= ESTADO Y CUMPLIMIENTO POR RECURSO ================= */
+let filtroCedi = 'TODOS';
+function renderRecursos(recursos, listaEstados){
+  const panel = document.getElementById('panelRecursos');
+  const lista = Object.entries(recursos);
+  if (!lista.length){ panel.style.display = 'none'; return; }
+
+  const filas = lista.map(([placa, r]) => {
+    const fin  = r.estados['FINALIZADO'] || 0;
+    const can  = contarCancelados(r.estados);
+    const base = Math.max(r.total - can, 0);
+    const pendientes = base - fin;
+    const pct  = base ? (fin / base) * 100 : 0;
+    return { placa, ...r, fin, can, base, pendientes, pct };
+  }).sort((a, b) => a.cedi.localeCompare(b.cedi) || a.pct - b.pct || b.total - a.total);
+
+  const cedisRec = [...new Set(filas.map(f => f.cedi))].sort();
+  if (filtroCedi !== 'TODOS' && !cedisRec.includes(filtroCedi)) filtroCedi = 'TODOS';
+  const filtro = document.getElementById('filtroRecursos');
+  filtro.innerHTML = cedisRec.length > 1
+    ? ['TODOS', ...cedisRec].map(c => {
+        const n = c === 'TODOS' ? filas.length : filas.filter(f => f.cedi === c).length;
+        return `<button class="${c === filtroCedi ? 'activo' : ''}" data-cedi="${c}">${c === 'TODOS' ? 'Todos' : c} (${n})</button>`;
+      }).join('')
+    : '';
+  filtro.querySelectorAll('button').forEach(b => b.onclick = () => {
+    filtroCedi = b.dataset.cedi;
+    renderRecursos(recursos, listaEstados);
+  });
+
+  const thead = document.querySelector('#tablaRecursos thead');
+  const tbody = document.querySelector('#tablaRecursos tbody');
+  thead.innerHTML = '<tr><th>Recurso</th><th>CEDI</th><th>Estado</th><th class="num">Servicios</th>' +
+    listaEstados.map(e => `<th class="num">${tituloEstado(e)}</th>`).join('') +
+    '<th class="num">Pendientes</th><th class="num">Cumplimiento</th></tr>';
+
+  tbody.innerHTML = '';
+  filas.filter(f => filtroCedi === 'TODOS' || f.cedi === filtroCedi).forEach(f => {
+    const clase = f.pct >= 98 ? 'v' : f.pct >= 95 ? 'a' : 'r';
+    const color = f.pct >= 98 ? 'var(--verde)' : f.pct >= 95 ? 'var(--ambar)' : 'var(--rojo)';
+    const estado = !f.base ? '<span class="estado-ruta sin">Sin servicios</span>'
+      : f.pendientes > 0 ? '<span class="estado-ruta curso">En ruta</span>'
+      : '<span class="estado-ruta fin">Ruta terminada</span>';
+    const celdas = listaEstados.map(e => {
+      const n = f.estados[e] || 0;
+      return `<td class="num${n ? '' : ' cero'}">${n ? n.toLocaleString('es-CO') : '—'}</td>`;
+    }).join('');
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td class="recurso"><b>${f.placa}</b><span>${f.conductor || ''}</span></td>
+        <td class="cedi-rec">${f.cedi}</td>
+        <td>${estado}</td>
+        <td class="num">${f.total.toLocaleString('es-CO')}</td>
+        ${celdas}
+        <td class="num${f.pendientes ? '' : ' cero'}">${f.pendientes ? f.pendientes.toLocaleString('es-CO') : '—'}</td>
+        <td class="num"><div class="cumple">
+          <div class="barra"><i style="width:${f.pct.toFixed(1)}%;background:${color}"></i></div>
+          <span class="pct ${clase}">${f.base ? f.pct.toFixed(1).replace('.', ',') + '%' : '—'}</span>
+        </div></td>
+      </tr>`);
+  });
+  panel.style.display = 'block';
 }
 
 function formatearFecha(iso){
