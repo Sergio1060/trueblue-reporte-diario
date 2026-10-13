@@ -5,7 +5,8 @@ Dashboard estático (GitHub Pages) para el cliente **True Blue (Proyecto SAI)**.
 - Servicios totales, finalizados y cancelados del día
 - % de efectividad global (Finalizados / servicios en responsabilidad = Total − Cancelados)
 - Tabla por ciudad con servicios, finalizados, cancelados, servicios en responsabilidad y % de efectividad con semáforo (verde ≥ 98%, ámbar ≥ 95%, rojo < 95%)
-- Tabla de estado y % de cumplimiento por recurso (placa + conductor): estados por servicio, pendientes, estado de ruta (En ruta / Ruta terminada) y semáforo de cumplimiento, con filtro por CEDI. Usa las columnas `Recurso` y `Conductor` del CSV; en modo EN VIVO se muestra si `data.json` trae la clave `recursos` (`{ "PLACA": { "conductor", "cedi", "total", "estados": {...} } }`)
+- Tabla de estado y % de cumplimiento por recurso (placa + conductor): estados por servicio, pendientes, estado de ruta (En ruta / Ruta terminada) y semáforo de cumplimiento, ordenada de menor a mayor cumplimiento. Usa las columnas `Recurso` y `Conductor` del CSV; en modo EN VIVO se muestra si `data.json` trae la clave `recursos` (`{ "PLACA": { "conductor", "cedi", "total", "estados": {...} } }`)
+- Filtro por CEDI en la parte superior que recalcula todo el reporte (KPIs, tablas, gráfica y novedades)
 - Gráfica de barras apiladas por ciudad (top 10 por volumen)
 
 Todo el procesamiento ocurre en el navegador: **el CSV nunca se sube a ningún servidor**, por lo que los datos de clientes no quedan publicados en el repositorio.

@@ -129,6 +129,8 @@
   .filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
   .filtros button{border:1px solid var(--linea);background:var(--blanco);color:var(--tinta);font:600 12px 'Inter',sans-serif;padding:5px 12px;border-radius:999px;cursor:pointer}
   .filtros button.activo{background:var(--azul-true);border-color:var(--azul-true);color:var(--blanco)}
+  .filtro-cedi{align-items:center;background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:12px 16px;margin-bottom:14px}
+  .filtro-cedi .lbl-filtro{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);font-weight:600;margin-right:6px}
 
   .nota{margin-top:12px;font-size:12px;color:var(--gris);line-height:1.5;border-left:3px solid var(--linea);padding-left:10px}
   .nota strong{color:var(--azul-profundo)}
@@ -158,7 +160,7 @@
     .header-der{width:100%;justify-content:space-between}
   }
   @media print{
-    .acciones,#dropzone,.filtros{display:none!important}
+    .acciones,#dropzone,.filtro-cedi button:not(.activo){display:none!important}
     body{background:var(--blanco)}
     main{padding:10px 0}
   }
@@ -199,6 +201,8 @@
       <button class="btn" onclick="mostrarDropzone()">📂 Cargar CSV manual</button>
       <button class="btn" onclick="window.print()">🖨 Imprimir / PDF</button>
     </div>
+
+    <div class="filtros filtro-cedi" id="filtroCedi" style="display:none"></div>
 
     <div class="kpis">
       <div class="kpi">
@@ -244,7 +248,6 @@
 
     <div class="panel" id="panelRecursos" style="display:none">
       <h3>Estado y cumplimiento por recurso</h3>
-      <div class="filtros" id="filtroRecursos"></div>
       <div class="tabla-scroll">
         <table id="tablaRecursos">
           <thead></thead>
@@ -317,14 +320,9 @@ async function cargarDatosVivo(manual){
     const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) throw new Error('sin data.json');
     const d = await r.json();
-    renderReporte({
-      total: d.total,
-      estadosGlobal: d.estados || {},
-      cedis: d.cedis || {},
-      novedades: d.novedades || {},
-      recursos: d.recursos || {},
-      fechas: d.fechas || []
-    });
+    fuenteDatos = { tipo: 'vivo', d };
+    filtroCedi = 'TODOS';
+    aplicarFiltroCedi();
     // Badge EN VIVO
     const badge = document.getElementById('badgeVivo');
     badge.style.display = 'flex';
@@ -368,6 +366,61 @@ function mostrarError(msg){
   errorMsg.style.display = 'block';
 }
 
+/* ================= FILTRO POR CEDI (aplica a todo el reporte) ================= */
+let fuenteDatos = null;   // { tipo: 'vivo', d } | { tipo: 'csv', filas, col... }
+let filtroCedi = 'TODOS';
+
+/* Agregado completo de la fuente, o solo del CEDI elegido */
+function aggFiltrado(){
+  const f = fuenteDatos;
+  if (f.tipo === 'csv'){
+    const filas = filtroCedi === 'TODOS' ? f.filas
+      : f.filas.filter(r => nombreCedi((r[f.colGrupo] || 'SIN CEDI').trim().toUpperCase()) === filtroCedi);
+    return agregarFilas(filas, f.colGrupo, f.colEstado, f.colFecha, f.colNovedad, f.colRecurso, f.colConductor);
+  }
+  const d = f.d;
+  if (filtroCedi === 'TODOS'){
+    return { total: d.total, estadosGlobal: d.estados || {}, cedis: d.cedis || {},
+      novedades: d.novedades || {}, recursos: d.recursos || {}, fechas: d.fechas || [] };
+  }
+  const c = (d.cedis || {})[filtroCedi] || { total: 0, estados: {} };
+  const novedades = {};
+  Object.entries(d.novedades || {}).forEach(([nov, x]) => {
+    const n = (x.cedis || {})[filtroCedi];
+    if (n) novedades[nov] = { count: n, cedis: { [filtroCedi]: n } };
+  });
+  const recursos = Object.fromEntries(Object.entries(d.recursos || {}).filter(([, r]) => r.cedi === filtroCedi));
+  return { total: c.total, estadosGlobal: c.estados, cedis: { [filtroCedi]: c }, novedades, recursos, fechas: d.fechas || [] };
+}
+
+function aplicarFiltroCedi(){
+  renderReporte(aggFiltrado());
+  renderFiltroCedi();
+}
+
+function renderFiltroCedi(){
+  const caja = document.getElementById('filtroCedi');
+  const f = fuenteDatos;
+  const conteo = {};
+  if (f.tipo === 'csv'){
+    f.filas.forEach(r => { const k = nombreCedi((r[f.colGrupo] || 'SIN CEDI').trim().toUpperCase()); conteo[k] = (conteo[k] || 0) + 1; });
+  } else {
+    Object.entries(f.d.cedis || {}).forEach(([k, c]) => conteo[k] = c.total);
+  }
+  const lista = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+  if (lista.length < 2){ caja.style.display = 'none'; return; }
+  const total = lista.reduce((a, [, n]) => a + n, 0);
+  caja.innerHTML = '<span class="lbl-filtro">CEDI</span>' +
+    [['TODOS', total], ...lista].map(([k, n]) =>
+      `<button class="${k === filtroCedi ? 'activo' : ''}" data-cedi="${k}">${k === 'TODOS' ? 'Todos' : k} (${n.toLocaleString('es-CO')})</button>`
+    ).join('');
+  caja.querySelectorAll('button').forEach(b => b.onclick = () => {
+    filtroCedi = b.dataset.cedi;
+    aplicarFiltroCedi();
+  });
+  caja.style.display = 'flex';
+}
+
 function procesarArchivo(file){
   errorMsg.style.display = 'none';
   Papa.parse(file, {
@@ -391,7 +444,9 @@ function procesarArchivo(file){
       }
       const agg = agregarFilas(filas, colGrupo, colEstado, colFecha, colNovedad, colRecurso, colConductor);
       if (!agg.total) return mostrarError('No se encontraron registros válidos en el archivo.');
-      renderReporte(agg);
+      fuenteDatos = { tipo: 'csv', filas, colGrupo, colEstado, colFecha, colNovedad, colRecurso, colConductor };
+      filtroCedi = 'TODOS';
+      aplicarFiltroCedi();
       document.getElementById('badgeVivo').style.display = 'none';
       document.getElementById('pieFuente').textContent = 'Fuente: exportación manual de servicios · SmartQuick';
     },
@@ -552,7 +607,6 @@ function renderReporte(agg){
 }
 
 /* ================= ESTADO Y CUMPLIMIENTO POR RECURSO ================= */
-let filtroCedi = 'TODOS';
 function renderRecursos(recursos, listaEstados){
   const panel = document.getElementById('panelRecursos');
   const lista = Object.entries(recursos);
@@ -565,21 +619,8 @@ function renderRecursos(recursos, listaEstados){
     const pendientes = base - fin;
     const pct  = base ? (fin / base) * 100 : 0;
     return { placa, ...r, fin, can, base, pendientes, pct };
-  }).sort((a, b) => a.cedi.localeCompare(b.cedi) || a.pct - b.pct || b.total - a.total);
-
-  const cedisRec = [...new Set(filas.map(f => f.cedi))].sort();
-  if (filtroCedi !== 'TODOS' && !cedisRec.includes(filtroCedi)) filtroCedi = 'TODOS';
-  const filtro = document.getElementById('filtroRecursos');
-  filtro.innerHTML = cedisRec.length > 1
-    ? ['TODOS', ...cedisRec].map(c => {
-        const n = c === 'TODOS' ? filas.length : filas.filter(f => f.cedi === c).length;
-        return `<button class="${c === filtroCedi ? 'activo' : ''}" data-cedi="${c}">${c === 'TODOS' ? 'Todos' : c} (${n})</button>`;
-      }).join('')
-    : '';
-  filtro.querySelectorAll('button').forEach(b => b.onclick = () => {
-    filtroCedi = b.dataset.cedi;
-    renderRecursos(recursos, listaEstados);
-  });
+  /* De menor a mayor cumplimiento; recursos sin servicios en responsabilidad al final */
+  }).sort((a, b) => (!a.base - !b.base) || a.pct - b.pct || b.pendientes - a.pendientes || b.total - a.total);
 
   const thead = document.querySelector('#tablaRecursos thead');
   const tbody = document.querySelector('#tablaRecursos tbody');
@@ -588,7 +629,7 @@ function renderRecursos(recursos, listaEstados){
     '<th class="num">Pendientes</th><th class="num">Cumplimiento</th></tr>';
 
   tbody.innerHTML = '';
-  filas.filter(f => filtroCedi === 'TODOS' || f.cedi === filtroCedi).forEach(f => {
+  filas.forEach(f => {
     const clase = f.pct >= 98 ? 'v' : f.pct >= 95 ? 'a' : 'r';
     const color = f.pct >= 98 ? 'var(--verde)' : f.pct >= 95 ? 'var(--ambar)' : 'var(--rojo)';
     const estado = !f.base ? '<span class="estado-ruta sin">Sin servicios</span>'
